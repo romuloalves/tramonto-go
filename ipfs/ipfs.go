@@ -1,58 +1,32 @@
 package ipfs
 
 import (
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/plugin/loader"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/repo/fsrepo"
-	config "gx/ipfs/QmUAuYuiafnJRZxDDX7MuruMNsicYNuyub5vUeAcupUBNs/go-ipfs-config"
-	"os"
-	"path/filepath"
+	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
+	"sync"
 )
 
-// LoadPlugins loads all the plugins to the IPFS
-func LoadPlugins(basePath string) error {
-	pluginpath := filepath.Join(basePath, "plugins")
-
-	// check if repo is accessible before loading plugins
-	plugins, err := loader.NewPluginLoader(pluginpath)
-	if err != nil {
-		return err
-	}
-
-	if err := plugins.Initialize(); err != nil {
-		return err
-	}
-
-	if err := plugins.Inject(); err != nil {
-		return err
-	}
-
-	return nil
+// OneIPFS represents the IPFS repo to Tramonto One
+type OneIPFS struct {
+	repoPath string
+	node     *core.IpfsNode
+	mux      *sync.Mutex
 }
 
-// InitRepo initializes the repo if it is not yet
-func InitRepo(path string) error {
-	// Verifies if the repo is initialized
-	isRepoInitialized := fsrepo.IsInitialized(path)
-
-	if isRepoInitialized {
-		return nil
+// InitializeOneIPFS initializes the One IPFS
+func InitializeOneIPFS(path string) (*OneIPFS, error) {
+	one := &OneIPFS{
+		repoPath: path,
+		mux:      new(sync.Mutex),
 	}
 
-	// Loads all the plugins
-	LoadPlugins(path)
+	return one, nil
+}
 
-	// Generates the initial config
-	initialConfig, err := config.Init(os.Stdout, 2048)
-	if err != nil {
-		return err
+// IsNodeRunning returns if the node is initialized and online
+func IsNodeRunning(node *core.IpfsNode) (bool, error) {
+	if node == nil {
+		return false, nil
 	}
 
-	initialConfig.Bootstrap = append(initialConfig.Bootstrap, "/ip4/206.189.200.98/tcp/4001/ipfs/QmQ7VQEj6asBAfUbW9XEC2PNMKUz1yWggSgKmtUsbYN6rt")
-
-	// Initializes the repo
-	if err := fsrepo.Init(path, initialConfig); err != nil {
-		return err
-	}
-
-	return nil
+	return node.OnlineMode(), nil
 }

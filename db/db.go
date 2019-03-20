@@ -12,8 +12,8 @@ type OneSQLite struct {
 	mux *sync.Mutex
 }
 
-// CreateOneSQLite creates a new instance of the One SQLite database
-func CreateOneSQLite(repoPath string) (*OneSQLite, error) {
+// OpenOneSQLite creates a new instance of the One SQLite database
+func OpenOneSQLite(repoPath string) (*OneSQLite, error) {
 	// Creates the path to the database
 	dbPath := path.Join(repoPath, "database", "one.db")
 
