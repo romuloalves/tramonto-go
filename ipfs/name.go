@@ -14,8 +14,8 @@ import (
 
 const ipnsTimeout = time.Second * 30
 
-// PublishIPNS publishes a IPFS hash to IPNS
-func PublishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, key iface.Key) error {
+// publishIPNS publishes a IPFS hash to IPNS
+func publishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, keyName string) error {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func PublishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, key iface.Key) error {
 
 	// Gets publish options (publishing to IPNS)
 	ipnsPublishOpts := []options.NamePublishOption{
-		options.Name.Key(key.Name()),
+		options.Name.Key(keyName),
 		options.Name.AllowOffline(true),
 	}
 
@@ -45,8 +45,8 @@ func PublishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, key iface.Key) error {
 	return nil
 }
 
-// ResolveIPNS resolves the IPNS
-func ResolveIPNS(node *core.IpfsNode, hash string) (iface.Path, error) {
+// resolveIPNS resolves the IPNS
+func resolveIPNS(node *core.IpfsNode, hash string) (iface.Path, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return nil, err

@@ -8,9 +8,9 @@ import (
 	"gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core/options"
 )
 
-// GenKey generates a new IPNS key (RSA-2048 default)
+// genKey generates a new IPNS key (RSA-2048 default)
 // Returns its hash
-func GenKey(node *core.IpfsNode, name string) (iface.Key, error) {
+func genKey(node *core.IpfsNode, name string) (iface.Key, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return nil, err
@@ -33,4 +33,35 @@ func GenKey(node *core.IpfsNode, name string) (iface.Key, error) {
 	}
 
 	return key, nil
+}
+
+// keyWithName return the key with the given name
+func keyWithName(node *core.IpfsNode, name string) (iface.Key, error) {
+	api, err := coreapi.NewCoreAPI(node)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generates context
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// List all keys
+	keys, err := api.Key().List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Loops the keys to verify existence
+	for _, key := range keys {
+		if key.Name() != name {
+			continue
+		}
+
+		// Key exists
+		return key, nil
+	}
+
+	// Do not exists
+	return nil, nil
 }

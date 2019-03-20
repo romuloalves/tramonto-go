@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-// LoadPlugins loads all the plugins to the IPFS
-func LoadPlugins(basePath string) error {
+// loadPlugins loads all the plugins to the IPFS
+func loadPlugins(basePath string) error {
 	pluginpath := filepath.Join(basePath, "plugins")
 
 	// check if repo is accessible before loading plugins
@@ -30,17 +30,15 @@ func LoadPlugins(basePath string) error {
 	return nil
 }
 
-// InitRepo initializes the repo if it is not yet
-func InitRepo(path string) error {
+// initRepo initializes the repo if it is not yet
+func initRepo(path string) error {
 	// Verifies if the repo is initialized
-	isRepoInitialized := fsrepo.IsInitialized(path)
-
-	if isRepoInitialized {
+	if isRepoInitialized := isRepoInitialized(path); isRepoInitialized {
 		return nil
 	}
 
 	// Loads all the plugins
-	LoadPlugins(path)
+	loadPlugins(path)
 
 	// Generates the initial config
 	initialConfig, err := config.Init(os.Stdout, 2048)
@@ -58,8 +56,8 @@ func InitRepo(path string) error {
 	return nil
 }
 
-// OpenRepo Opens the repo
-func OpenRepo(path string) (repo.Repo, error) {
+// openRepo Opens the repo
+func openRepo(path string) (repo.Repo, error) {
 	// Gets the repo
 	nodeRepo, err := fsrepo.Open(path)
 	if err != nil {
@@ -69,7 +67,7 @@ func OpenRepo(path string) (repo.Repo, error) {
 	return nodeRepo, nil
 }
 
-// IsRepoInitialized return is the repo is initialized
-func IsRepoInitialized(path string) bool {
+// isRepoInitialized return is the repo is initialized
+func isRepoInitialized(path string) bool {
 	return !fsrepo.IsInitialized(path)
 }

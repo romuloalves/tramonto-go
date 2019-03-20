@@ -1,109 +1,79 @@
 package tramonto
 
 import (
-	"strings"
+	"errors"
 
-	oneFiles "gitlab.com/tramonto-one/go-tramonto/files"
-	oneIpfs "gitlab.com/tramonto-one/go-tramonto/ipfs"
+	"gitlab.com/tramonto-one/go-tramonto/entities"
 )
 
-// OneTest represents a test in the Tramonto One
-type OneTest struct {
-	IpfsHash string            `json:"ipfsHash"`
-	IpnsHash string            `json:"ipnsHash"`
-	Secret   string            `json:"secret"`
-	Metadata oneFiles.Metadata `json:"metadata,omitempty"`
-}
+// CreateTest creates a new test
+// Uploads to IPFS and inserts in the database
+func (t *TramontoOne) CreateTest(name, description string) (entities.Test, error) {
+	testResult := entities.NewEmptyTest()
 
-// NewTest publishes a new test to IPFS
-func (t *One) NewTest(name, description string) (OneTest, error) {
-	// Locks context
-	t.mux.Lock()
-	defer t.mux.Unlock()
-
-	// Verifies if node is running
-	if running, err := oneIpfs.IsNodeRunning(t.node); err != nil || !running {
-		return OneTest{}, err
-	}
-
-	testResult := OneTest{}
-
-	// Generates content to the file
-	metadata, err := oneFiles.NewMetadata(name, description)
+	// Generates the test content
+	metadata, err := entities.NewMetadata(name, description)
 	if err != nil {
 		return testResult, err
 	}
 
 	testResult.Metadata = metadata
 
-	// Converts metadata to JSON
-	jsonData, err := metadata.ToJSON()
+	// Upload to IPFS
+	ipfsHash, err := t.ipfs.UploadTest(metadata)
 	if err != nil {
-		return testResult, err
+		return testResult, errors.New("Erro uploading to IPFS: " + err.Error())
 	}
 
-	// Adds content to IPFS
-	ipfsCid, err := oneIpfs.AddContent(t.node, jsonData, true)
-	if err != nil {
-		return testResult, err
-	}
+	testResult.Ipfs = ipfsHash
 
-	// Stores IPFS hash
-	testResult.IpfsHash = ipfsCid.Hash().B58String()
-
-	// Generates IPNS key
-	key, err := oneIpfs.GenKey(t.node, name)
-	if err != nil {
-		return testResult, err
-	}
-
-	// Stores IPNS hash
-	testResult.IpnsHash = key.ID().Pretty()
-
-	// Publishes to IPNS
-	if err := oneIpfs.PublishIPNS(t.node, ipfsCid, key); err != nil {
-		return testResult, err
-	}
+	// TODO: Add to database
 
 	return testResult, nil
 }
 
-// GetTest returns the test with the given IPNS
-func (t *One) GetTest(ipns, secret string) (OneTest, error) {
-	// Locks
-	t.mux.Lock()
-	defer t.mux.Unlock()
-
-	if running, err := oneIpfs.IsNodeRunning(t.node); err != nil || !running {
-		return OneTest{}, err
-	}
-
-	testResult := OneTest{
-		IpnsHash: ipns,
-		Secret:   secret,
-	}
-
-	// Gets the IPFS hash
-	ipfsPath, err := oneIpfs.ResolveIPNS(t.node, ipns)
+// GetTestByIPFS returns a single test by its IPFS hash
+func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) (entities.Test, error) {
+	// Get Metadata from IPFS
+	metadata, err := t.ipfs.GetTestByIPFS(ipfsHash, secret)
 	if err != nil {
-		return testResult, err
+		return entities.Test{}, errors.New("Cannot read from IPFS: " + err.Error())
 	}
 
-	testResult.IpfsHash = strings.Split(ipfsPath.String(), "/")[2]
+	// Return the Test
+	return entities.Test{
+		Ipfs:           ipfsHash,
+		IpnsKeyCreated: false, // TODO: Verify about find IPNS key with the test name
+		Secret:         secret,
+		Metadata:       metadata,
+	}, nil
+}
 
-	// Reads the content of the hash
-	fileContent, err := oneIpfs.ReadContent(t.node, ipfsPath)
+// GetTestByIPNS returns a single test by its IPNS hash
+func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) (entities.Test, error) {
+	// Get Metadata from IPNS
+	metadata, err := t.ipfs.GetTestByIPNS(ipnsHash, secret)
 	if err != nil {
-		return testResult, err
+		return entities.Test{}, errors.New("Cannot read from IPNS: " + err.Error())
 	}
 
-	// Transforms the json string to a Metadata struct
-	metadata, err := oneFiles.MetadataFromJSON(fileContent)
+	// Return the Test
+	return entities.Test{
+		Ipns:           ipnsHash,
+		IpnsKeyCreated: true, // TODO: Verify about find IPNS key with the test name
+		Secret:         secret,
+		Metadata:       metadata,
+	}, nil
+}
+
+// ShareTest shares a test with IPNS
+func (t *TramontoOne) ShareTest(ipfsHash, testName string) (string, error) {
+	// Share with IPNS
+	ipnsHash, err := t.ipfs.PublishTest(ipfsHash, testName)
 	if err != nil {
-		return testResult, err
+		return ipnsHash, errors.New("Error sharing test: " + err.Error())
 	}
 
-	testResult.Metadata = metadata
-
-	return testResult, nil
+	// Return the IPNS hash
+	return ipnsHash, nil
 }

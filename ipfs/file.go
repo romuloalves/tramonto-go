@@ -15,8 +15,8 @@ import (
 
 const catTimeout = time.Minute
 
-// AddContent adds a buffer to IPFS
-func AddContent(node *core.IpfsNode, content []byte, pin bool) (cid.Cid, error) {
+// addContent adds a buffer to IPFS
+func addContent(node *core.IpfsNode, content []byte, pin bool) (cid.Cid, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return cid.Cid{}, err
@@ -43,8 +43,8 @@ func AddContent(node *core.IpfsNode, content []byte, pin bool) (cid.Cid, error) 
 	return ipfsPath.Cid(), nil
 }
 
-// ReadContent reads the content in a hash
-func ReadContent(node *core.IpfsNode, path iface.Path) ([]byte, error) {
+// readContent reads the content in a hash
+func readContent(node *core.IpfsNode, path iface.Path) ([]byte, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return []byte{}, err

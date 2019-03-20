@@ -1,11 +1,25 @@
+GO ?= go
+
 test:
-	@go test -cover ./...
+	$(GO) test -cover ./...
 .PHONY: test
 
 android:
-	@gomobile bind -o Tramonto.aar -target=android gitlab.com/romuloalves/go-ipfs-react-native
+	@mkdir -p dist/
+
+	@rm -f ./dist/Tramonto-sources.jar ./dist/Tramonto.aar
+
+	@gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/romuloalves/go-ipfs-react-native
 .PHONY: android
 
 ios:
-	@gomobile bind -o Tramonto.framework -target=ios gitlab.com/romuloalves/go-ipfs-react-native
+	@mkdir -p dist/
+
+	@rm -rf ./dist/Tramonto.framework
+
+	@gomobile bind -o ./dist/Tramonto.framework -target=ios gitlab.com/romuloalves/go-ipfs-react-native
 .PHONY:ios
+
+todo:
+	@rg TODO:
+.PHONY: todo
