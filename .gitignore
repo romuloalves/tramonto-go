@@ -1,2 +1,10 @@
+# Test files
 .temp-ipfs/
 main.go
+
+# Android build to mobile
+Tramonto.aar
+Tramonto-sources.jar
+
+# iOS build to mobile
+Tramonto.framework/
