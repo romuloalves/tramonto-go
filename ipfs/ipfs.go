@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
+	"path/filepath"
 	"sync"
 )
 
@@ -16,8 +17,10 @@ type OneIPFS struct {
 
 // InitializeOneIPFS initializes the One IPFS
 func InitializeOneIPFS(path string) (*OneIPFS, error) {
+	repoPath := filepath.Join(path, ".ipfs")
+
 	one := &OneIPFS{
-		repoPath: path,
+		repoPath: repoPath,
 		mux:      new(sync.Mutex),
 	}
 
@@ -33,19 +36,31 @@ func (t *OneIPFS) isNodeRunning() bool {
 	return t.node.OnlineMode()
 }
 
+// InitRepo initializes the repo
+func (t *OneIPFS) InitRepo() error {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
+	if err := initRepo(t.repoPath); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Start starts the node
 func (t *OneIPFS) Start() error {
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	// Verifies if the node is already running
-	if running := t.isNodeRunning(); running {
-		return errors.New("Node is already running")
-	}
-
 	// Verifies if the repo is initialized
 	if initialized := isRepoInitialized(t.repoPath); !initialized {
 		return errors.New("Repo not initialized")
+	}
+
+	// Verifies if the node is already running
+	if running := t.isNodeRunning(); running {
+		return errors.New("Node is already running")
 	}
 
 	// Loads the plugins before create the node

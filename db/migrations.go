@@ -1,9 +1,11 @@
 package db
 
 import (
-	"database/sql"
-
 	"github.com/GuiaBolso/darwin"
+	"github.com/jmoiron/sqlx"
+
+	// Importing to use sqlite3
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // List of all migrations
@@ -12,16 +14,33 @@ var migrations = []darwin.Migration{
 		Version:     1,
 		Description: "Create the database",
 		Script: `
-			create table tests (id integer primary key not null, name text not null, description text not null, ipns text, ipfs text, isOwner integer not null, isFavorite integer not null, createdAt integer not null, updatedAt integer not null);
-			create unique index tests_unique_id on tests (id);
+			CREATE TABLE tests (
+    			name             VARCHAR (6) NOT NULL,
+    			description      TEXT        NOT NULL,
+    			secret           TEXT        NOT NULL,
+    			ipfs_hash        VARCHAR,
+    			ipns_hash        VARCHAR,
+    			is_key_generated BOOLEAN     NOT NULL
+                                 			DEFAULT false,
+    			is_owner         BOOLEAN     NOT NULL
+                                 			DEFAULT true,
+    			is_favorite      BOOLEAN     NOT NULL
+                                 			DEFAULT false,
+    			created_at       TIMESTAMP   NOT NULL
+                                 			DEFAULT (CURRENT_TIMESTAMP),
+    			updated_at       TIMESTAMP   NOT NULL
+                                 			DEFAULT (CURRENT_TIMESTAMP),
+    			is_active        BOOLEAN     NOT NULL
+                                 			DEFAULT true
+			);
 		`,
 	},
 }
 
 // migrate will execute the migrations to the SQLite database
-func migrate(db *sql.DB) error {
+func migrate(db *sqlx.DB) error {
 	// Creates the driver to the SQLite
-	driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
+	driver := darwin.NewGenericDriver(db.DB, darwin.SqliteDialect{})
 
 	// Creates the migration
 	d := darwin.New(driver, migrations, nil)

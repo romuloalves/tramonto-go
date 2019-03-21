@@ -27,9 +27,23 @@ func (t *TramontoOne) CreateTest(name, description string) (entities.Test, error
 
 	testResult.Ipfs = ipfsHash
 
-	// TODO: Add to database
+	// Adds test to database
+	if err := t.db.InsertTest(testResult); err != nil {
+		return testResult, errors.New("Error inserting to the database: " + err.Error())
+	}
 
 	return testResult, nil
+}
+
+// GetTests gets all the tests from the database
+func (t *TramontoOne) GetTests() ([]entities.Test, error) {
+	// Finds tests
+	tests, err := t.db.FindTests()
+	if err != nil {
+		return tests, errors.New("Error finding tests: " + err.Error())
+	}
+
+	return tests, nil
 }
 
 // GetTestByIPFS returns a single test by its IPFS hash

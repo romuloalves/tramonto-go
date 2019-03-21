@@ -69,5 +69,5 @@ func openRepo(path string) (repo.Repo, error) {
 
 // isRepoInitialized return is the repo is initialized
 func isRepoInitialized(path string) bool {
-	return !fsrepo.IsInitialized(path)
+	return fsrepo.IsInitialized(path)
 }
