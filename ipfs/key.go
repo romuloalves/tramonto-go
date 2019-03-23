@@ -65,3 +65,20 @@ func keyWithName(node *core.IpfsNode, name string) (iface.Key, error) {
 	// Do not exists
 	return nil, nil
 }
+
+// GetKeyWithName returns the key with the given name
+func (t *OneIPFS) GetKeyWithName(name string) (bool, string, error) {
+	t.mux.Lock()
+	defer t.mux.Unlock()
+
+	key, err := keyWithName(t.node, name)
+	if err != nil {
+		return false, "", err
+	}
+
+	if key == nil {
+		return false, "", nil
+	}
+
+	return true, key.ID().Pretty(), nil
+}

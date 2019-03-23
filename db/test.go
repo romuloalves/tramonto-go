@@ -31,8 +31,8 @@ func (db *OneSQLite) InsertTest(test entities.Test) error {
 
 	// Converts entity to schema
 	dbtest := dbTest{
-		Name:           test.Metadata.Name,
-		Description:    test.Metadata.Description,
+		Name:           "TR0001",
+		Description:    "test.Metadata.Description,",
 		IpfsHash:       test.Ipfs,
 		Secret:         test.Secret,
 		IsKeyGenerated: test.IpnsKeyCreated,
@@ -48,7 +48,8 @@ func (db *OneSQLite) InsertTest(test entities.Test) error {
 	// Inserts data
 	sqlResult := tx.MustExec(`
 		INSERT INTO tests (name, description, secret, ipfs_hash, ipns_hash, is_key_generated)
-		VALUES ($1, $2, $3, $4, $5, $6);`, test.Metadata.Name, test.Metadata.Description, test.Secret, test.Ipfs, test.Ipns, test.IpnsKeyCreated)
+		VALUES ($1, $2, $3, $4, $5, $6);`,
+		test.Metadata.Name, test.Metadata.Description, test.Secret, test.Ipfs, test.Ipns, test.IpnsKeyCreated)
 
 	r, err := sqlResult.RowsAffected()
 	if err != nil {

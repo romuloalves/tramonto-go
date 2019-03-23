@@ -7,6 +7,7 @@ import (
 	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
 	cid "gx/ipfs/QmTbxNB1NwDesLmKTscr4udL2tVP7MaxvXnD1D9yX7g3PN/go-cid"
 	iface "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core"
+	"strings"
 
 	"gitlab.com/tramonto-one/go-tramonto/entities"
 )
@@ -71,18 +72,25 @@ func (oneIpfs *OneIPFS) GetTestByIPFS(hash, secret string) (entities.Metadata, e
 }
 
 // GetTestByIPNS returns a test Metadata by IPFS
-func (oneIpfs *OneIPFS) GetTestByIPNS(hash, secret string) (entities.Metadata, error) {
+func (oneIpfs *OneIPFS) GetTestByIPNS(hash, secret string) (string, entities.Metadata, error) {
 	oneIpfs.mux.Lock()
 	defer oneIpfs.mux.Unlock()
 
 	// Resolves IPNS to IPFS
 	ipfsPath, err := resolveIPNS(oneIpfs.node, hash)
 	if err != nil {
-		return entities.Metadata{}, errors.New("Error resolving IPNS: " + err.Error())
+		return "", entities.Metadata{}, errors.New("Error resolving IPNS: " + err.Error())
 	}
 
 	// Reads and returns
-	return getTestByIPFS(oneIpfs.node, ipfsPath, secret)
+	test, err := getTestByIPFS(oneIpfs.node, ipfsPath, secret)
+	if err != nil {
+		return "", test, err
+	}
+
+	ipfsHash := strings.Split(ipfsPath.String(), "/")[2]
+
+	return ipfsHash, test, nil
 }
 
 // PublishTest publishes a test with IPNS
