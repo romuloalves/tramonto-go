@@ -9,7 +9,7 @@ android:
 
 	@rm -f ./dist/Tramonto-sources.jar ./dist/Tramonto.aar
 
-	@gomobile bind -v -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto
+	@gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto/tramonto
 .PHONY: android
 
 ios:
