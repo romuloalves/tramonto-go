@@ -65,7 +65,7 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 		return []byte{}, errors.New("Cannot read from IPFS: " + err.Error())
 	}
 
-	ipnsKeyExists, ipnsKey, err := t.ipfs.GetKeyWithName(metadata.name)
+	ipnsKeyExists, ipnsKey, err := t.ipfs.GetKeyWithName(metadata.Name)
 	if err != nil {
 		return []byte{}, errors.New("Error verifing IPNS key: " + err.Error())
 	}
@@ -78,7 +78,7 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 	}
 
 	if ipnsKeyExists {
-		test.Ipns = ipnsKey.Ipns
+		test.Ipns = ipnsKey
 	}
 
 	// Return the Test
