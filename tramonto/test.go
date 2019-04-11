@@ -18,7 +18,7 @@ func (t *TramontoOne) CreateTest(name, description string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	// testResult.Metadata = metadata
+	testResult.Metadata = metadata
 
 	// Upload to IPFS
 	ipfsHash, err := t.ipfs.UploadTest(metadata)

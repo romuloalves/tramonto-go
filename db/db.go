@@ -21,7 +21,6 @@ func OpenOneSQLite(repoPath string) (*OneSQLite, error) {
 
 	// Creates/connects to the database
 	conn, err := sqlx.Open("sqlite3", dbPath)
-	// conn, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, err
 	}

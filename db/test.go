@@ -11,9 +11,9 @@ import (
 )
 
 type dbTest struct {
-	Name           string
-	Description    string
-	Secret         string
+	Name           string    `db:"name"`
+	Description    string    `db:"description"`
+	Secret         string    `db:"secret"`
 	IpfsHash       string    `db:"ipfs_hash"`
 	IpnsHash       string    `db:"ipns_hash"`
 	IsKeyGenerated bool      `db:"is_key_generated"`
@@ -28,19 +28,6 @@ type dbTest struct {
 func (db *OneSQLite) InsertTest(test entities.Test) error {
 	db.mux.Lock()
 	defer db.mux.Unlock()
-
-	// Converts entity to schema
-	dbtest := dbTest{
-		Name:           "TR0001",
-		Description:    "test.Metadata.Description,",
-		IpfsHash:       test.Ipfs,
-		Secret:         test.Secret,
-		IsKeyGenerated: test.IpnsKeyCreated,
-	}
-
-	if test.IpnsKeyCreated {
-		dbtest.IpnsHash = test.Ipns
-	}
 
 	// Starts transaction
 	tx := db.db.MustBegin()
