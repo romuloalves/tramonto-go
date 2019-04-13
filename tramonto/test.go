@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	oneCrypto "gitlab.com/tramonto-one/go-tramonto/crypto"
 	"gitlab.com/tramonto-one/go-tramonto/entities"
 )
 
@@ -15,27 +16,35 @@ func (t *TramontoOne) CreateTest(name, description string) ([]byte, error) {
 	// Generates the test content
 	metadata, err := entities.NewMetadata(name, description)
 	if err != nil {
-		return []byte{}, err
+		return nil, err
 	}
 
 	testResult.Metadata = metadata
 
-	// Upload to IPFS
-	ipfsHash, err := t.ipfs.UploadTest(metadata)
+	// Creates a secret
+	secret, err := oneCrypto.GenerateSecret()
 	if err != nil {
-		return []byte{}, errors.New("Erro uploading to IPFS: " + err.Error())
+		return nil, errors.New("Error generating secret: " + err.Error())
+	}
+
+	testResult.Secret = secret
+
+	// Upload to IPFS
+	ipfsHash, err := t.ipfs.UploadTest(metadata, secret)
+	if err != nil {
+		return nil, errors.New("Error uploading to IPFS: " + err.Error())
 	}
 
 	testResult.Ipfs = ipfsHash
 
 	// Adds test to database
 	if err := t.db.InsertTest(testResult); err != nil {
-		return []byte{}, errors.New("Error inserting to the database: " + err.Error())
+		return nil, errors.New("Error inserting to the database: " + err.Error())
 	}
 
 	jsonResponse, err := json.Marshal(testResult)
 	if err != nil {
-		return []byte{}, errors.New("Error parsing to json: " + err.Error())
+		return nil, errors.New("Error parsing to json: " + err.Error())
 	}
 
 	return jsonResponse, nil
@@ -46,12 +55,12 @@ func (t *TramontoOne) GetTests() ([]byte, error) {
 	// Finds tests
 	tests, err := t.db.FindTests()
 	if err != nil {
-		return []byte{}, errors.New("Error finding tests: " + err.Error())
+		return nil, errors.New("Error finding tests: " + err.Error())
 	}
 
 	jsonData, err := json.Marshal(tests)
 	if err != nil {
-		return []byte{}, errors.New("Error parsing to json: " + err.Error())
+		return nil, errors.New("Error parsing to json: " + err.Error())
 	}
 
 	return jsonData, nil
@@ -62,12 +71,12 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 	// Get Metadata from IPFS
 	metadata, err := t.ipfs.GetTestByIPFS(ipfsHash, secret)
 	if err != nil {
-		return []byte{}, errors.New("Cannot read from IPFS: " + err.Error())
+		return nil, errors.New("Cannot read from IPFS: " + err.Error())
 	}
 
 	ipnsKeyExists, ipnsKey, err := t.ipfs.GetKeyWithName(metadata.Name)
 	if err != nil {
-		return []byte{}, errors.New("Error verifing IPNS key: " + err.Error())
+		return nil, errors.New("Error verifing IPNS key: " + err.Error())
 	}
 
 	test := entities.Test{
@@ -84,7 +93,7 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 	// Return the Test
 	jsonData, err := json.Marshal(test)
 	if err != nil {
-		return []byte{}, errors.New("Error parsing to json: " + err.Error())
+		return nil, errors.New("Error parsing to json: " + err.Error())
 	}
 
 	return jsonData, nil
@@ -95,7 +104,7 @@ func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) ([]byte, error) {
 	// Get Metadata from IPNS
 	ipfsHash, metadata, err := t.ipfs.GetTestByIPNS(ipnsHash, secret)
 	if err != nil {
-		return []byte{}, errors.New("Cannot read from IPNS: " + err.Error())
+		return nil, errors.New("Cannot read from IPNS: " + err.Error())
 	}
 
 	test := entities.Test{
@@ -109,7 +118,7 @@ func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) ([]byte, error) {
 	// Return the Test
 	jsonData, err := json.Marshal(test)
 	if err != nil {
-		return []byte{}, errors.New("Error parsing to json: " + err.Error())
+		return nil, errors.New("Error parsing to json: " + err.Error())
 	}
 
 	return jsonData, nil

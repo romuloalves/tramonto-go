@@ -9,12 +9,13 @@ import (
 	iface "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core"
 	"strings"
 
+	oneCrypto "gitlab.com/tramonto-one/go-tramonto/crypto"
 	"gitlab.com/tramonto-one/go-tramonto/entities"
 )
 
 // UploadTest uploads a test to IPFS
 // Returns the IPFS hash
-func (oneIpfs *OneIPFS) UploadTest(metadata entities.Metadata) (string, error) {
+func (oneIpfs *OneIPFS) UploadTest(metadata entities.Metadata, secret string) (string, error) {
 	oneIpfs.mux.Lock()
 	defer oneIpfs.mux.Unlock()
 
@@ -29,8 +30,13 @@ func (oneIpfs *OneIPFS) UploadTest(metadata entities.Metadata) (string, error) {
 		return "", errors.New("Erro converting metadata to json: " + err.Error())
 	}
 
+	encryptedData, err := oneCrypto.Encrypt(secret, jsonRepresentation)
+	if err != nil {
+		return "", errors.New("Error encrypting data: " + err.Error())
+	}
+
 	// Uploads json to IPFS
-	ipfsCid, err := addContent(oneIpfs.node, jsonRepresentation, true)
+	ipfsCid, err := addContent(oneIpfs.node, encryptedData, true)
 	if err != nil {
 		return "", errors.New("Error adding content: " + err.Error())
 	}
@@ -45,9 +51,14 @@ func getTestByIPFS(node *core.IpfsNode, path iface.Path, secret string) (entitie
 		return entities.Metadata{}, errors.New("Error reading content: " + err.Error())
 	}
 
+	decryptedData, err := oneCrypto.Decrypt(secret, content)
+	if err != nil {
+		return entities.Metadata{}, errors.New("Error decrypting data: " + err.Error())
+	}
+
 	// Parses from json
 	var metadata entities.Metadata
-	if err := json.Unmarshal(content, &metadata); err != nil {
+	if err := json.Unmarshal(decryptedData, &metadata); err != nil {
 		return entities.Metadata{}, errors.New("Error parsing to json: " + err.Error())
 	}
 
