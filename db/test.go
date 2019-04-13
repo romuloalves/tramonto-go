@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	// Importing to use sqlite3
@@ -38,12 +37,10 @@ func (db *OneSQLite) InsertTest(test entities.Test) error {
 		VALUES ($1, $2, $3, $4, $5, $6);`,
 		test.Metadata.Name, test.Metadata.Description, test.Secret, test.Ipfs, test.Ipns, test.IpnsKeyCreated)
 
-	r, err := sqlResult.RowsAffected()
+	_, err := sqlResult.RowsAffected()
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Printf(">>> Rows: %d\n\n", r)
 
 	// Commits
 	if err := tx.Commit(); err != nil {
