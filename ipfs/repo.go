@@ -1,12 +1,14 @@
 package ipfs
 
 import (
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/plugin/loader"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/repo"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/repo/fsrepo"
-	config "gx/ipfs/QmUAuYuiafnJRZxDDX7MuruMNsicYNuyub5vUeAcupUBNs/go-ipfs-config"
 	"os"
 	"path/filepath"
+
+	config "github.com/ipfs/go-ipfs-config"
+
+	"github.com/ipfs/go-ipfs/plugin/loader"
+	"github.com/ipfs/go-ipfs/repo"
+	"github.com/ipfs/go-ipfs/repo/fsrepo"
 )
 
 // loadPlugins loads all the plugins to the IPFS
@@ -45,8 +47,6 @@ func initRepo(path string) error {
 	if err != nil {
 		return err
 	}
-
-	initialConfig.Bootstrap = append(initialConfig.Bootstrap, "/ip4/206.189.200.98/tcp/4001/ipfs/QmQ7VQEj6asBAfUbW9XEC2PNMKUz1yWggSgKmtUsbYN6rt")
 
 	// Initializes the repo
 	if err := fsrepo.Init(path, initialConfig); err != nil {

@@ -3,14 +3,15 @@ package ipfs
 import (
 	"context"
 	"errors"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core/coreapi"
-	files "gx/ipfs/QmQmhotPUzVrMEWNK3x1R5jQ5ZHWyL7tVUrmRPjrBrvyCb/go-ipfs-files"
-	cid "gx/ipfs/QmTbxNB1NwDesLmKTscr4udL2tVP7MaxvXnD1D9yX7g3PN/go-cid"
-	iface "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core"
-	"gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core/options"
 	"io/ioutil"
 	"time"
+
+	cid "github.com/ipfs/go-cid"
+	files "github.com/ipfs/go-ipfs-files"
+	"github.com/ipfs/go-ipfs/core"
+	"github.com/ipfs/go-ipfs/core/coreapi"
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	ifacePath "github.com/ipfs/interface-go-ipfs-core/path"
 )
 
 const catTimeout = time.Minute
@@ -44,7 +45,7 @@ func addContent(node *core.IpfsNode, content []byte, pin bool) (cid.Cid, error) 
 }
 
 // readContent reads the content in a hash
-func readContent(node *core.IpfsNode, path iface.Path) ([]byte, error) {
+func readContent(node *core.IpfsNode, path ifacePath.Path) ([]byte, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return []byte{}, err

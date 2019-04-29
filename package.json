@@ -1,21 +1,9 @@
 {
   "author": "romuloalves",
   "bugs": {},
-  "gx": {
-    "dvcsimport": "gitlab.com/tramonto-one/go-tramonto"
-  },
-  "gxDependencies": [
-    {
-      "hash": "QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL",
-      "name": "go-ipfs",
-      "version": "0.4.19"
-    }
-  ],
-  "gxVersion": "0.14.2",
   "language": "go",
   "license": "",
   "name": "go-tramonto",
-  "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
   "version": "0.1.0"
 }
 

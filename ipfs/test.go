@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
-	cid "gx/ipfs/QmTbxNB1NwDesLmKTscr4udL2tVP7MaxvXnD1D9yX7g3PN/go-cid"
-	iface "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core"
 	"strings"
+
+	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-ipfs/core"
+	ifacePath "github.com/ipfs/interface-go-ipfs-core/path"
 
 	oneCrypto "gitlab.com/tramonto-one/go-tramonto/crypto"
 	"gitlab.com/tramonto-one/go-tramonto/entities"
@@ -44,7 +45,7 @@ func (oneIpfs *OneIPFS) UploadTest(metadata entities.Metadata, secret string) (s
 	return ipfsCid.Hash().B58String(), nil
 }
 
-func getTestByIPFS(node *core.IpfsNode, path iface.Path, secret string) (entities.Metadata, error) {
+func getTestByIPFS(node *core.IpfsNode, path ifacePath.Path, secret string) (entities.Metadata, error) {
 	// Reads content
 	content, err := readContent(node, path)
 	if err != nil {
@@ -73,10 +74,7 @@ func (oneIpfs *OneIPFS) GetTestByIPFS(hash, secret string) (entities.Metadata, e
 
 	// Parses IPFS hash to Path
 	ipfsHashPath := fmt.Sprintf("/ipfs/%s", hash)
-	ipfsPath, err := iface.ParsePath(ipfsHashPath)
-	if err != nil {
-		return entities.Metadata{}, errors.New("Error parsing path: " + err.Error())
-	}
+	ipfsPath := ifacePath.New(ipfsHashPath)
 
 	// Reads and returns
 	return getTestByIPFS(oneIpfs.node, ipfsPath, secret)

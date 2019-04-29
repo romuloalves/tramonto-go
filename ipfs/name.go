@@ -3,13 +3,14 @@ package ipfs
 import (
 	"context"
 	"fmt"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core/coreapi"
-	cid "gx/ipfs/QmTbxNB1NwDesLmKTscr4udL2tVP7MaxvXnD1D9yX7g3PN/go-cid"
-	iface "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core"
-	"gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core/options"
-	nsopts "gx/ipfs/QmXLwxifxwfc2bAwq6rdjbYqAsGzWsDE9RM5TWMGtykyj6/interface-go-ipfs-core/options/namesys"
 	"time"
+
+	cid "github.com/ipfs/go-cid"
+	"github.com/ipfs/go-ipfs/core"
+	"github.com/ipfs/go-ipfs/core/coreapi"
+	"github.com/ipfs/interface-go-ipfs-core/options"
+	nsopts "github.com/ipfs/interface-go-ipfs-core/options/namesys"
+	ifacePath "github.com/ipfs/interface-go-ipfs-core/path"
 )
 
 const ipnsTimeout = time.Second * 30
@@ -23,10 +24,7 @@ func publishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, keyName string) error {
 
 	// Parses IPFS Cid to Path
 	ipfsStrPath := fmt.Sprintf("/ipns/%s", ipfsCid.Hash().B58String())
-	ipfsPath, err := iface.ParsePath(ipfsStrPath)
-	if err != nil {
-		return err
-	}
+	ipfsPath := ifacePath.New(ipfsStrPath)
 
 	// Gets publish options (publishing to IPNS)
 	ipnsPublishOpts := []options.NamePublishOption{
@@ -46,7 +44,7 @@ func publishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, keyName string) error {
 }
 
 // resolveIPNS resolves the IPNS
-func resolveIPNS(node *core.IpfsNode, hash string) (iface.Path, error) {
+func resolveIPNS(node *core.IpfsNode, hash string) (ifacePath.Path, error) {
 	api, err := coreapi.NewCoreAPI(node)
 	if err != nil {
 		return nil, err

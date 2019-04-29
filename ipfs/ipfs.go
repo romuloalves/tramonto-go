@@ -3,9 +3,10 @@ package ipfs
 import (
 	"context"
 	"errors"
-	"gx/ipfs/QmPDEJTb3WBHmvubsLXCaqRPC8dRgvFz7A4p96dxZbJuWL/go-ipfs/core"
 	"path/filepath"
 	"sync"
+
+	"github.com/ipfs/go-ipfs/core"
 )
 
 // OneIPFS represents the IPFS repo to Tramonto One
@@ -33,7 +34,7 @@ func (t *OneIPFS) isNodeRunning() bool {
 		return false
 	}
 
-	return t.node.OnlineMode()
+	return t.node.IsOnline
 }
 
 // InitRepo initializes the repo
