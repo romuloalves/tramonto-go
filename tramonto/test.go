@@ -129,7 +129,12 @@ func (t *TramontoOne) ShareTest(ipfsHash, testName string) (string, error) {
 	// Share with IPNS
 	ipnsHash, err := t.ipfs.PublishTest(ipfsHash, testName)
 	if err != nil {
-		return ipnsHash, errors.New("Error sharing test: " + err.Error())
+		return "", errors.New("Error sharing test: " + err.Error())
+	}
+
+	// Saves the IPNS hash in the database
+	if err = t.db.SaveSharedTest(ipfsHash, ipnsHash); err != nil {
+		return "", errors.New("Error saving hash: " + err.Error())
 	}
 
 	// Return the IPNS hash

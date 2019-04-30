@@ -85,3 +85,34 @@ func (db *OneSQLite) FindTests() ([]entities.Test, error) {
 
 	return result, nil
 }
+
+// SaveSharedTest saves the new informations to a recently shared test
+func (db *OneSQLite) SaveSharedTest(ipfsHash, ipnsHash string) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	// Starts the transaction
+	tx := db.db.MustBegin()
+
+	// Updates the shared test
+	sqlResult := db.db.MustExec(`
+		UPDATE tests
+		SET ipns_hash = $1, is_key_generated = 1, updated_at = CURRENT_TIMESTAMP
+		WHERE ipfs_hash = $2
+	`, ipnsHash, ipfsHash)
+
+	rowsAffected, err := sqlResult.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("No test found with the given IPFS hash")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
