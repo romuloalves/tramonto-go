@@ -13,7 +13,7 @@ import (
 	ifacePath "github.com/ipfs/interface-go-ipfs-core/path"
 )
 
-const ipnsTimeout = time.Second * 30
+const ipnsTimeout = time.Minute * 3
 
 // publishIPNS publishes a IPFS hash to IPNS
 func publishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, keyName string) error {
