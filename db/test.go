@@ -63,7 +63,7 @@ func (db *OneSQLite) FindTests() ([]entities.Test, error) {
 		SELECT *
 		FROM tests
 		WHERE is_active = 1
-		ORDER BY name ASC`); err != nil {
+		ORDER BY updated_at DESC`); err != nil {
 		return []entities.Test{}, errors.New("Error finding tests: " + err.Error())
 	}
 
