@@ -75,6 +75,7 @@ func (db *OneSQLite) FindTests() ([]entities.Test, error) {
 			Ipfs:           test.IpfsHash,
 			Ipns:           test.IpnsHash,
 			IpnsKeyCreated: test.IsKeyGenerated,
+			IsOwner:        test.IsOwner,
 			Secret:         test.Secret,
 			Metadata: entities.Metadata{
 				Name:        test.Name,

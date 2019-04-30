@@ -11,6 +11,9 @@ type Test struct {
 	// If IPNS key was created
 	IpnsKeyCreated bool `json:"ipnsKeyCreated"`
 
+	// If the current node is owner of the archieve
+	IsOwner bool `json:"isOwner"`
+
 	// Secret to decrypt the files
 	Secret string `json:"secret"`
 
@@ -22,5 +25,6 @@ type Test struct {
 func NewEmptyTest() Test {
 	return Test{
 		IpnsKeyCreated: false,
+		IsOwner:        true,
 	}
 }
