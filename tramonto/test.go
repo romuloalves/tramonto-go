@@ -32,14 +32,14 @@ func (t *TramontoOne) CreateTest(name, description string) ([]byte, error) {
 	// Upload to IPFS
 	ipfsHash, err := t.ipfs.UploadTest(metadata, secret)
 	if err != nil {
-		return nil, errors.New("Error uploading to IPFS: " + err.Error())
+		return nil, errors.New("(IPFS) Error uploading: " + err.Error())
 	}
 
 	testResult.Ipfs = ipfsHash
 
 	// Adds test to database
 	if err := t.db.InsertTest(testResult); err != nil {
-		return nil, errors.New("Error inserting to the database: " + err.Error())
+		return nil, errors.New("(Database) Error inserting to the database: " + err.Error())
 	}
 
 	jsonResponse, err := json.Marshal(testResult)
@@ -55,7 +55,7 @@ func (t *TramontoOne) GetTests() ([]byte, error) {
 	// Finds tests
 	tests, err := t.db.FindTests()
 	if err != nil {
-		return nil, errors.New("Error finding tests: " + err.Error())
+		return nil, errors.New("(Database) Error finding tests: " + err.Error())
 	}
 
 	jsonData, err := json.Marshal(tests)
@@ -71,7 +71,7 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 	// Get Metadata from IPFS
 	metadata, err := t.ipfs.GetTestByIPFS(ipfsHash, secret)
 	if err != nil {
-		return nil, errors.New("Cannot read from IPFS: " + err.Error())
+		return nil, errors.New("(IPFS) Cannot read from IPFS: " + err.Error())
 	}
 
 	ipnsKeyExists, ipnsKey, err := t.ipfs.GetKeyWithName(metadata.Name)
@@ -104,7 +104,7 @@ func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) ([]byte, error) {
 	// Get Metadata from IPNS
 	ipfsHash, metadata, err := t.ipfs.GetTestByIPNS(ipnsHash, secret)
 	if err != nil {
-		return nil, errors.New("Cannot read from IPNS: " + err.Error())
+		return nil, errors.New("(IPNS) Cannot read from IPNS: " + err.Error())
 	}
 
 	test := entities.Test{
@@ -127,16 +127,67 @@ func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) ([]byte, error) {
 // ShareTest shares a test with IPNS
 func (t *TramontoOne) ShareTest(ipfsHash, testName string) (string, error) {
 	// Share with IPNS
-	ipnsHash, err := t.ipfs.PublishTest(ipfsHash, testName)
+	ipnsHash, err := t.ipfs.PublishToIPNS(ipfsHash, testName)
 	if err != nil {
-		return "", errors.New("Error sharing test: " + err.Error())
+		return "", errors.New("(IPNS) Error sharing test: " + err.Error())
 	}
 
 	// Saves the IPNS hash in the database
 	if err = t.db.SaveSharedTest(ipfsHash, ipnsHash); err != nil {
-		return "", errors.New("Error saving hash: " + err.Error())
+		return "", errors.New("(Database) Error saving hash: " + err.Error())
 	}
 
 	// Return the IPNS hash
 	return ipnsHash, nil
+}
+
+// AddMember adds a new member to an existing test
+func (t *TramontoOne) AddMember(ipns, name, email, role string) ([]byte, error) {
+	// Finds test in the database
+	test, err := t.db.FindTestByIpns(ipns)
+	if err != nil {
+		return nil, errors.New("(Database) Test not found: " + err.Error())
+	}
+
+	// Reads test config file from IPFS
+	ipfsTest, err := t.ipfs.GetTestByIPFS(test.Ipfs, test.Secret)
+	if err != nil {
+		return nil, errors.New("(IPFS) Test not found: " + err.Error())
+	}
+
+	// Creates the member entity
+	newMember, err := entities.NewMember(name, email, role)
+	if err != nil {
+		return nil, errors.New("Error creating member: " + err.Error())
+	}
+
+	// Adds the member to the metadata
+	if err = ipfsTest.AddMember(newMember); err != nil {
+		return nil, errors.New("Error adding member: " + err.Error())
+	}
+
+	// Uploads the test to IPFS
+	newIpfsHash, err := t.ipfs.UploadTest(ipfsTest, test.Secret)
+	if err != nil {
+		return nil, errors.New("(IPFS) Error uploading test: " + err.Error())
+	}
+
+	// Publishes the new Metadata to IPNS
+	// We should update the database just after a succeded publish to IPNS
+	if _, err := t.ipfs.PublishToIPNS(newIpfsHash, test.Metadata.Name); err != nil {
+		return nil, errors.New("(IPNS) Error publishing: " + err.Error())
+	}
+
+	// Updates the database
+	if err = t.db.UpdateIPFSHash(ipns, newIpfsHash); err != nil {
+		return nil, errors.New("(Database) Error updating data: " + err.Error())
+	}
+
+	// Return the Test
+	jsonData, err := json.Marshal(ipfsTest)
+	if err != nil {
+		return nil, errors.New("Error parsing to json: " + err.Error())
+	}
+
+	return jsonData, nil
 }

@@ -102,9 +102,9 @@ func (oneIpfs *OneIPFS) GetTestByIPNS(hash, secret string) (string, entities.Met
 	return ipfsHash, test, nil
 }
 
-// PublishTest publishes a test with IPNS
+// PublishToIPNS publishes a test with IPNS
 // Returns the IPNS hash
-func (oneIpfs *OneIPFS) PublishTest(ipfsHash, keyName string) (string, error) {
+func (oneIpfs *OneIPFS) PublishToIPNS(ipfsHash, keyName string) (string, error) {
 	oneIpfs.mux.Lock()
 	defer oneIpfs.mux.Unlock()
 

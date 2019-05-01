@@ -2,6 +2,8 @@ package entities
 
 import (
 	"encoding/json"
+	"errors"
+	"strings"
 	"time"
 )
 
@@ -55,6 +57,24 @@ func (m *Metadata) AddArtifact(name, description string) error {
 	}
 
 	m.Artifacts = append(m.Artifacts, artifact)
+
+	return nil
+}
+
+// AddMember adds the new member to the metadata
+func (m *Metadata) AddMember(newMember Member) error {
+	lowerName, lowerEmail := strings.ToLower(newMember.Name), strings.ToLower(newMember.Email)
+
+	// Validates if a members with this data already exists
+	for _, member := range m.Members {
+		if strings.ToLower(member.Email) != lowerEmail || strings.ToLower(member.Name) != lowerName {
+			continue
+		}
+
+		return errors.New("Member with this name or email already exists")
+	}
+
+	m.Members = append(m.Members, newMember)
 
 	return nil
 }

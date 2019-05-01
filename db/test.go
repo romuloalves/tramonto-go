@@ -117,3 +117,60 @@ func (db *OneSQLite) SaveSharedTest(ipfsHash, ipnsHash string) error {
 
 	return nil
 }
+
+// FindTestByIpns returns a single test by its IPNS hash
+func (db *OneSQLite) FindTestByIpns(ipnsHash string) (entities.Test, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	test := dbTest{}
+
+	err := db.db.Get(&test, "SELECT * FROM tests WHERE ipns_hash = $1 AND is_active = 1", ipnsHash)
+	if err != nil {
+		return entities.Test{}, err
+	}
+
+	return entities.Test{
+		Ipfs:           test.IpfsHash,
+		Ipns:           test.IpnsHash,
+		IpnsKeyCreated: test.IsKeyGenerated,
+		IsOwner:        test.IsOwner,
+		Secret:         test.Secret,
+		Metadata: entities.Metadata{
+			Name:        test.Name,
+			Description: test.Description,
+		},
+	}, nil
+}
+
+// UpdateIPFSHash Updates the IPFS hash of a test
+func (db *OneSQLite) UpdateIPFSHash(ipns, newIpfs string) error {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	// Starts transaction
+	tx := db.db.MustBegin()
+
+	// Executes the update of the data
+	dbResponse := db.db.MustExec(`
+		UPDATE tests
+		SET ipfs_hash = $1, updated_at = CURRENT_TIMESTAMP
+		WHERE ipns_hash = $2 AND is_active = 1`, newIpfs, ipns)
+
+	// Verifies affected rows
+	affectedRows, err := dbResponse.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return errors.New("No test updated with IPNS hash equals to " + ipns)
+	}
+
+	// Commits if it is everything ok
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
