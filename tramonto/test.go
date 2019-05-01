@@ -50,6 +50,36 @@ func (t *TramontoOne) CreateTest(name, description string) ([]byte, error) {
 	return jsonResponse, nil
 }
 
+// ImportTest imports a new test to the node
+func (t *TramontoOne) ImportTest(ipns, secret string) ([]byte, error) {
+	// Reads the test from IPNS
+	ipfs, test, err := t.ipfs.GetTestByIPNS(ipns, secret)
+	if err != nil {
+		return nil, errors.New("(IPNS) Could not find test: " + err.Error())
+	}
+
+	testToInsert := entities.Test{
+		Ipfs:           ipfs,
+		Ipns:           ipns,
+		IpnsKeyCreated: true,
+		IsOwner:        false,
+		Secret:         secret,
+		Metadata:       test,
+	}
+
+	// Inserts the test in the database
+	if err = t.db.InsertTest(testToInsert); err != nil {
+		return nil, errors.New("(Database) Could not insert: " + err.Error())
+	}
+
+	jsonResponse, err := json.Marshal(testToInsert)
+	if err != nil {
+		return nil, errors.New("Error parsing to json: " + err.Error())
+	}
+
+	return jsonResponse, nil
+}
+
 // GetTests gets all the tests from the database
 func (t *TramontoOne) GetTests() ([]byte, error) {
 	// Finds tests
@@ -101,22 +131,31 @@ func (t *TramontoOne) GetTestByIPFS(ipfsHash, secret string) ([]byte, error) {
 
 // GetTestByIPNS returns a single test by its IPNS hash
 func (t *TramontoOne) GetTestByIPNS(ipnsHash, secret string) ([]byte, error) {
+	// Gets the test from database
+	databaseTest, err := t.db.FindTestByIpns(ipnsHash)
+	if err != nil {
+		return nil, errors.New("(Database) Could not find test: " + err.Error())
+	}
+
 	// Get Metadata from IPNS
 	ipfsHash, metadata, err := t.ipfs.GetTestByIPNS(ipnsHash, secret)
 	if err != nil {
 		return nil, errors.New("(IPNS) Cannot read from IPNS: " + err.Error())
 	}
 
-	test := entities.Test{
-		Ipns:           ipnsHash,
-		Ipfs:           ipfsHash,
-		IpnsKeyCreated: true,
-		Secret:         secret,
-		Metadata:       metadata,
+	// The test was updated since the last access
+	if databaseTest.Ipfs != ipfsHash {
+		if err = t.db.UpdateIPFSHash(ipnsHash, ipfsHash); err != nil {
+			return nil, errors.New("(Database) Could not update IPFS: " + err.Error())
+		}
+
+		databaseTest.Ipfs = ipfsHash
 	}
 
+	databaseTest.Metadata = metadata
+
 	// Return the Test
-	jsonData, err := json.Marshal(test)
+	jsonData, err := json.Marshal(databaseTest)
 	if err != nil {
 		return nil, errors.New("Error parsing to json: " + err.Error())
 	}
@@ -147,6 +186,11 @@ func (t *TramontoOne) AddMember(ipns, name, email, role string) ([]byte, error) 
 	test, err := t.db.FindTestByIpns(ipns)
 	if err != nil {
 		return nil, errors.New("(Database) Test not found: " + err.Error())
+	}
+
+	// Verifies if the user is the owner
+	if !test.IsOwner {
+		return nil, errors.New("User is not owner of this test")
 	}
 
 	// Reads test config file from IPFS

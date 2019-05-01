@@ -76,3 +76,25 @@ func readContent(node *core.IpfsNode, path ifacePath.Path) ([]byte, error) {
 
 	return fileContent, nil
 }
+
+// pin will pin the ipfs in the node
+func pin(node *core.IpfsNode, path ifacePath.Path) error {
+	api, err := coreapi.NewCoreAPI(node)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	options := []options.PinAddOption{
+		options.Pin.Recursive(true),
+	}
+
+	// Pins the item
+	if err = api.Pin().Add(ctx, path, options...); err != nil {
+		return err
+	}
+
+	return nil
+}

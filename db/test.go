@@ -33,9 +33,9 @@ func (db *OneSQLite) InsertTest(test entities.Test) error {
 
 	// Inserts data
 	sqlResult := tx.MustExec(`
-		INSERT INTO tests (name, description, secret, ipfs_hash, ipns_hash, is_key_generated)
-		VALUES ($1, $2, $3, $4, $5, $6);`,
-		test.Metadata.Name, test.Metadata.Description, test.Secret, test.Ipfs, test.Ipns, test.IpnsKeyCreated)
+		INSERT INTO tests (name, description, secret, ipfs_hash, ipns_hash, is_key_generated, is_owner)
+		VALUES ($1, $2, $3, $4, $5, $6, $7);`,
+		test.Metadata.Name, test.Metadata.Description, test.Secret, test.Ipfs, test.Ipns, test.IpnsKeyCreated, test.IsOwner)
 
 	_, err := sqlResult.RowsAffected()
 	if err != nil {
