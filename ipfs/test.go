@@ -31,7 +31,7 @@ func (oneIpfs *OneIPFS) UploadTest(metadata entities.Metadata, secret string) (s
 		return "", errors.New("Erro converting metadata to json: " + err.Error())
 	}
 
-	encryptedData, err := oneCrypto.Encrypt(secret, jsonRepresentation)
+	encryptedData, err := oneCrypto.EncryptConfigFile(secret, jsonRepresentation)
 	if err != nil {
 		return "", errors.New("Error encrypting data: " + err.Error())
 	}
@@ -52,7 +52,7 @@ func getTestByIPFS(node *core.IpfsNode, path ifacePath.Path, secret string) (ent
 		return entities.Metadata{}, errors.New("Error reading content: " + err.Error())
 	}
 
-	decryptedData, err := oneCrypto.Decrypt(secret, content)
+	decryptedData, err := oneCrypto.DecryptConfigFile(secret, content)
 	if err != nil {
 		return entities.Metadata{}, errors.New("Error decrypting data: " + err.Error())
 	}
