@@ -9,7 +9,7 @@ android:
 
 	@rm -f ./dist/Tramonto-sources.jar ./dist/Tramonto.aar
 
-	@gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto/tramonto
+	GIN_MODE=release @gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto/tramonto
 .PHONY: android
 
 ios:
@@ -17,7 +17,7 @@ ios:
 
 	@rm -rf ./dist/Tramonto.framework
 
-	@gomobile bind -o ./dist/Tramonto.framework -target=ios gitlab.com/tramonto-one/go-tramonto/tramonto
+	GIN_MODE=release @gomobile bind -o ./dist/Tramonto.framework -target=ios gitlab.com/tramonto-one/go-tramonto/tramonto
 .PHONY:ios
 
 todo:

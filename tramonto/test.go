@@ -235,3 +235,13 @@ func (t *TramontoOne) AddMember(ipns, name, email, role string) ([]byte, error) 
 
 	return jsonData, nil
 }
+
+// GetArtifact gets an artifact and shows it to the user
+func (t *TramontoOne) GetArtifact(ipns, artifactHash string) ([]byte, error) {
+	return []byte("Hello from you friend " + ipns + " 2222 !!!!"), nil
+}
+
+// AddArtifact adds a new artifact to an existing test
+func (t *TramontoOne) AddArtifact(ipns, name, description string) ([]byte, error) {
+	return []byte("Hello from you friend " + ipns + "!!!!"), nil
+}

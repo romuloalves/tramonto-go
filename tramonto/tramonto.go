@@ -6,6 +6,7 @@ import (
 	"gitlab.com/tramonto-one/go-tramonto/db"
 
 	oneDb "gitlab.com/tramonto-one/go-tramonto/db"
+	oneHttp "gitlab.com/tramonto-one/go-tramonto/http"
 	oneIpfs "gitlab.com/tramonto-one/go-tramonto/ipfs"
 )
 
@@ -13,6 +14,7 @@ import (
 type TramontoOne struct {
 	ipfs *oneIpfs.OneIPFS
 	db   *db.OneSQLite
+	http *oneHttp.OneHTTP
 }
 
 // NewTramontoOne returns a new instance of Tramonto One library
@@ -26,12 +28,19 @@ func NewTramontoOne(path string) (*TramontoOne, error) {
 	// Initializes the database
 	db, err := oneDb.OpenOneSQLite(path)
 	if err != nil {
-		return nil, errors.New("Error opening OneSQLite: " + err.Error())
+		return nil, errors.New("Error initializing OneSQLite: " + err.Error())
+	}
+
+	// Configures HTTP server
+	http, err := oneHttp.InitializeHTTPServer()
+	if err != nil {
+		return nil, errors.New("Error initializing OneHTTP: " + err.Error())
 	}
 
 	tramontoOne := &TramontoOne{
 		ipfs: ipfs,
 		db:   db,
+		http: http,
 	}
 
 	return tramontoOne, nil
@@ -52,6 +61,20 @@ func (one *TramontoOne) Setup() error {
 	// Migrates database
 	if err := one.db.MigrateTables(); err != nil {
 		return errors.New("Error migrating IPFS: " + err.Error())
+	}
+
+	// Configures endpoints
+	one.http.AddGetArtifact(func(ipns, artifactHash string) ([]byte, error) {
+		return one.GetArtifact(ipns, artifactHash)
+	})
+
+	one.http.AddPostArtifact(func(ipns, name, description string) ([]byte, error) {
+		return one.AddArtifact(ipns, name, description)
+	})
+
+	// Starts HTTP server
+	if err := one.http.Start(); err != nil {
+		return errors.New("Error starting HTTP server: " + err.Error())
 	}
 
 	return nil
