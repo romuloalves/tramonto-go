@@ -3,6 +3,7 @@ package ipfs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/ipfs/go-ipfs/core/coreapi"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	ifacePath "github.com/ipfs/interface-go-ipfs-core/path"
+	oneCrypto "gitlab.com/tramonto-one/go-tramonto/crypto"
 )
 
 const catTimeout = time.Minute
@@ -60,6 +62,11 @@ func readContent(node *core.IpfsNode, path ifacePath.Path) ([]byte, error) {
 		return []byte{}, err
 	}
 
+	// Pins the content
+	if err = pin(node, path); err != nil {
+		return nil, errors.New("Error pinning the object: " + err.Error())
+	}
+
 	// Reads the file content
 	var file files.File
 	switch f := f.(type) {
@@ -97,4 +104,43 @@ func pin(node *core.IpfsNode, path ifacePath.Path) error {
 	}
 
 	return nil
+}
+
+// ReadArtifact will read the artifact of the specific hash
+func (oneIpfs *OneIPFS) ReadArtifact(ipfsHash, secret string) ([]byte, error) {
+	oneIpfs.mux.Lock()
+	defer oneIpfs.mux.Unlock()
+
+	// Parses IPFS hash to Path
+	ipfsHashPath := fmt.Sprintf("/ipfs/%s", ipfsHash)
+	ipfsPath := ifacePath.New(ipfsHashPath)
+
+	// Reads the content of the IPFS hash
+	content, err := readContent(oneIpfs.node, ipfsPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decrypts the content and just returns it
+	return oneCrypto.DecryptArtifact(secret, content)
+}
+
+// UploadArtifact updates an artifact to IPFS
+func (oneIpfs *OneIPFS) UploadArtifact(content []byte, secret string) (string, error) {
+	oneIpfs.mux.Lock()
+	defer oneIpfs.mux.Unlock()
+
+	// Encrypts the content
+	encryptedContent, err := oneCrypto.EncryptArtifact(secret, content)
+	if err != nil {
+		return "", errors.New("Could not encrypt artifact: " + err.Error())
+	}
+
+	// Uploads to IPFS
+	cid, err := addContent(oneIpfs.node, encryptedContent, true)
+	if err != nil {
+		return "", errors.New("Could not upload file to IPFS: " + err.Error())
+	}
+
+	return cid.Hash().B58String(), nil
 }

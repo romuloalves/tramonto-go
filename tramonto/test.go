@@ -237,11 +237,98 @@ func (t *TramontoOne) AddMember(ipns, name, email, role string) ([]byte, error) 
 }
 
 // GetArtifact gets an artifact and shows it to the user
-func (t *TramontoOne) GetArtifact(ipns, artifactHash string) ([]byte, error) {
-	return []byte("Hello from you friend " + ipns + " 2222 !!!!"), nil
+func (t *TramontoOne) GetArtifact(ipnsHash, artifactHash string) (entities.Artifact, []byte, error) {
+	// Gets the test from database
+	databaseTest, err := t.db.FindTestByIpns(ipnsHash)
+	if err != nil {
+		return entities.Artifact{}, nil, errors.New("(Database) Could not find test: " + err.Error())
+	}
+
+	// Get Metadata from IPNS
+	metadata, err := t.ipfs.GetTestByIPFS(databaseTest.Ipfs, databaseTest.Secret)
+	if err != nil {
+		return entities.Artifact{}, nil, errors.New("(IPFS) Cannot read from IPFS: " + err.Error())
+	}
+
+	// Takes all the infos from the artifact
+	var artifactInfo *entities.Artifact
+	for _, artifact := range metadata.Artifacts {
+		if artifact.Hash != artifactHash {
+			continue
+		}
+
+		artifactInfo = &artifact
+		break
+	}
+
+	if artifactInfo == nil {
+		return entities.Artifact{}, nil, nil
+	}
+
+	content, err := t.ipfs.ReadArtifact(artifactInfo.Hash, databaseTest.Secret)
+	if err != nil {
+		return entities.Artifact{}, nil, errors.New("Could not read artifact: " + err.Error())
+	}
+
+	return *artifactInfo, content, nil
 }
 
 // AddArtifact adds a new artifact to an existing test
-func (t *TramontoOne) AddArtifact(ipns, name, description string) ([]byte, error) {
-	return []byte("Hello from you friend " + ipns + "!!!!"), nil
+func (t *TramontoOne) AddArtifact(ipnsHash, name, description string, file []byte, fileHeaders map[string][]string) ([]byte, error) {
+	// Gets the test from database
+	databaseTest, err := t.db.FindTestByIpns(ipnsHash)
+	if err != nil {
+		return nil, errors.New("(Database) Could not find test: " + err.Error())
+	}
+
+	// Verifies if the user is the owner
+	if !databaseTest.IsOwner {
+		return nil, errors.New("User is not owner of this test")
+	}
+
+	// Get Metadata from IPNS
+	metadata, err := t.ipfs.GetTestByIPFS(databaseTest.Ipfs, databaseTest.Secret)
+	if err != nil {
+		return nil, errors.New("(IPFS) Cannot read from IPFS: " + err.Error())
+	}
+
+	// Uploads to IPFS
+	ipfsHash, err := t.ipfs.UploadArtifact(file, databaseTest.Secret)
+	if err != nil {
+		return nil, err
+	}
+
+	// Adds the artifact to the test
+	if err = metadata.AddArtifact(name, description, ipfsHash, fileHeaders); err != nil {
+		return nil, err
+	}
+
+	databaseTest.Metadata = metadata
+
+	// Uploads the test to IPFS
+	newIpfsHash, err := t.ipfs.UploadTest(metadata, databaseTest.Secret)
+	if err != nil {
+		return nil, errors.New("(IPFS) Error uploading test: " + err.Error())
+	}
+
+	// Publishes the new Metadata to IPNS
+	// We should update the database just after a succeded publish to IPNS
+	if _, err := t.ipfs.PublishToIPNS(newIpfsHash, databaseTest.Metadata.Name); err != nil {
+		return nil, errors.New("(IPNS) Error publishing: " + err.Error())
+	}
+
+	// Updates the database
+	if err = t.db.UpdateIPFSHash(ipnsHash, newIpfsHash); err != nil {
+		return nil, errors.New("(Database) Error updating data: " + err.Error())
+	}
+
+	databaseTest.Ipfs = newIpfsHash
+
+	// Return the Test
+	jsonData, err := json.Marshal(databaseTest)
+	if err != nil {
+		return nil, errors.New("Error parsing to json: " + err.Error())
+	}
+
+	return jsonData, nil
 }

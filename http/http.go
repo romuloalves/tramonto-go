@@ -1,8 +1,11 @@
 package http
 
 import (
+	"io/ioutil"
 	"net/http"
 	"sync"
+
+	"gitlab.com/tramonto-one/go-tramonto/entities"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +42,7 @@ func (h *OneHTTP) Start() error {
 }
 
 // AddPostArtifact registers and calls the function to add a new artifacts to a test
-func (h *OneHTTP) AddPostArtifact(callback func(ipns, name, description string) ([]byte, error)) {
+func (h *OneHTTP) AddPostArtifact(callback func(ipns, name, description string, file []byte, headers map[string][]string) ([]byte, error)) {
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
@@ -54,9 +57,27 @@ func (h *OneHTTP) AddPostArtifact(callback func(ipns, name, description string) 
 
 		name := form.Value["name"][0]
 		description := form.Value["description"][0]
-		// file := form.File["artifact[]"][0]
+		file, err := c.FormFile("artifact")
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
 
-		response, err := callback(ipns, name, description)
+		headers := (map[string][]string)(file.Header)
+
+		fileReader, err := file.Open()
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		content, err := ioutil.ReadAll(fileReader)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+
+		response, err := callback(ipns, name, description, content, headers)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -67,7 +88,7 @@ func (h *OneHTTP) AddPostArtifact(callback func(ipns, name, description string) 
 }
 
 // AddGetArtifact registers and calls the function to download an artifact from a test
-func (h *OneHTTP) AddGetArtifact(callback func(ipns, artifactHash string) ([]byte, error)) {
+func (h *OneHTTP) AddGetArtifact(callback func(ipns, artifactHash string) (entities.Artifact, []byte, error)) {
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
@@ -75,12 +96,18 @@ func (h *OneHTTP) AddGetArtifact(callback func(ipns, artifactHash string) ([]byt
 		ipns := c.Param("ipns")
 		artifactHash := c.Param("artifactHash")
 
-		response, err := callback(ipns, artifactHash)
+		artifact, content, err := callback(ipns, artifactHash)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 
-		c.String(http.StatusOK, string(response))
+		for key, value := range artifact.Headers {
+			c.Header(key, value[0])
+		}
+
+		contentType := artifact.Headers["Content-Type"][0]
+
+		c.Data(http.StatusOK, contentType, content)
 	})
 }

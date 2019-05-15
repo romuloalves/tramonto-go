@@ -3,6 +3,8 @@ package tramonto
 import (
 	"errors"
 
+	"gitlab.com/tramonto-one/go-tramonto/entities"
+
 	"gitlab.com/tramonto-one/go-tramonto/db"
 
 	oneDb "gitlab.com/tramonto-one/go-tramonto/db"
@@ -64,18 +66,20 @@ func (one *TramontoOne) Setup() error {
 	}
 
 	// Configures endpoints
-	one.http.AddGetArtifact(func(ipns, artifactHash string) ([]byte, error) {
+	one.http.AddGetArtifact(func(ipns, artifactHash string) (entities.Artifact, []byte, error) {
 		return one.GetArtifact(ipns, artifactHash)
 	})
 
-	one.http.AddPostArtifact(func(ipns, name, description string) ([]byte, error) {
-		return one.AddArtifact(ipns, name, description)
+	one.http.AddPostArtifact(func(ipns, name, description string, file []byte, fileHeaders map[string][]string) ([]byte, error) {
+		return one.AddArtifact(ipns, name, description, file, fileHeaders)
 	})
 
 	// Starts HTTP server
-	if err := one.http.Start(); err != nil {
-		return errors.New("Error starting HTTP server: " + err.Error())
-	}
+	go func() {
+		if err := one.http.Start(); err != nil {
+			panic(err)
+		}
+	}()
 
 	return nil
 }

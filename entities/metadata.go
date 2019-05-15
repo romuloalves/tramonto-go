@@ -50,8 +50,8 @@ func (m *Metadata) ToJSON() ([]byte, error) {
 }
 
 // AddArtifact adds a new artifact to the test
-func (m *Metadata) AddArtifact(name, description string) error {
-	artifact, err := NewArtifact(name, description)
+func (m *Metadata) AddArtifact(name, description, hash string, fileHeaders map[string][]string) error {
+	artifact, err := NewArtifact(name, description, hash, fileHeaders)
 	if err != nil {
 		return err
 	}

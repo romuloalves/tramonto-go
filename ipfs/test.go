@@ -52,11 +52,6 @@ func getTestByIPFS(node *core.IpfsNode, path ifacePath.Path, secret string) (ent
 		return entities.Metadata{}, errors.New("Error reading content: " + err.Error())
 	}
 
-	// Pins IPFS
-	if err = pin(node, path); err != nil {
-		return entities.Metadata{}, errors.New("Error pinning: " + err.Error())
-	}
-
 	decryptedData, err := oneCrypto.DecryptConfigFile(secret, content)
 	if err != nil {
 		return entities.Metadata{}, errors.New("Error decrypting data: " + err.Error())
