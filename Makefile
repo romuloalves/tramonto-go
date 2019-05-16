@@ -1,7 +1,8 @@
-GO ?= go
+.EXPORT_ALL_VARIABLES:
+	GIN_MODE=release
 
 test:
-	$(GO) test -cover ./...
+	@go test -cover ./...
 .PHONY: test
 
 android:
@@ -9,7 +10,7 @@ android:
 
 	@rm -f ./dist/Tramonto-sources.jar ./dist/Tramonto.aar
 
-	GIN_MODE=release @gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto/tramonto
+	@gomobile bind -o ./dist/Tramonto.aar -target=android gitlab.com/tramonto-one/go-tramonto/tramonto
 .PHONY: android
 
 ios:
@@ -17,7 +18,7 @@ ios:
 
 	@rm -rf ./dist/Tramonto.framework
 
-	GIN_MODE=release @gomobile bind -o ./dist/Tramonto.framework -target=ios gitlab.com/tramonto-one/go-tramonto/tramonto
+	@gomobile bind -o ./dist/Tramonto.framework -target=ios gitlab.com/tramonto-one/go-tramonto/tramonto
 .PHONY:ios
 
 todo:
