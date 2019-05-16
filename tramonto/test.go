@@ -267,7 +267,7 @@ func (t *TramontoOne) GetArtifact(ipnsHash, artifactHash string) (entities.Artif
 
 	content, err := t.ipfs.ReadArtifact(artifactInfo.Hash, databaseTest.Secret)
 	if err != nil {
-		return entities.Artifact{}, nil, errors.New("Could not read artifact: " + err.Error())
+		return entities.Artifact{}, nil, errors.New("(IPFS) Could not read artifact: " + err.Error())
 	}
 
 	return *artifactInfo, content, nil
@@ -295,12 +295,12 @@ func (t *TramontoOne) AddArtifact(ipnsHash, name, description string, file []byt
 	// Uploads to IPFS
 	ipfsHash, err := t.ipfs.UploadArtifact(file, databaseTest.Secret)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("(IPFS) Could not upload artifact: " + err.Error())
 	}
 
 	// Adds the artifact to the test
 	if err = metadata.AddArtifact(name, description, ipfsHash, fileHeaders); err != nil {
-		return nil, err
+		return nil, errors.New("Error adding artifact to test: " + err.Error())
 	}
 
 	databaseTest.Metadata = metadata
