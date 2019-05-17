@@ -34,6 +34,10 @@ func (h *OneHTTP) Start() error {
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
+	h.server.GET("/ping", func(c *gin.Context) {
+		c.String(http.StatusOK, "pong")
+	})
+
 	if err := h.server.Run(httpPort); err != nil {
 		return err
 	}
@@ -46,7 +50,7 @@ func (h *OneHTTP) AddPostArtifact(callback func(ipns, name, description string, 
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
-	h.server.POST("/:ipns", func(c *gin.Context) {
+	h.server.POST("/artifacts/:ipns", func(c *gin.Context) {
 		ipns := c.Param("ipns")
 
 		form, err := c.MultipartForm()
@@ -92,7 +96,7 @@ func (h *OneHTTP) AddGetArtifact(callback func(ipns, artifactHash string) (entit
 	h.mux.Lock()
 	defer h.mux.Unlock()
 
-	h.server.GET("/:ipns/:artifactHash", func(c *gin.Context) {
+	h.server.GET("/artifacts/:ipns/:artifactHash", func(c *gin.Context) {
 		ipns := c.Param("ipns")
 		artifactHash := c.Param("artifactHash")
 
