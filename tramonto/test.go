@@ -42,6 +42,15 @@ func (t *TramontoOne) CreateTest(name, description string) ([]byte, error) {
 		return nil, errors.New("(Database) Error inserting to the database: " + err.Error())
 	}
 
+	// Shares in IPNS
+	ipnsHash, err := t.ShareTest(ipfsHash, name)
+	if err != nil {
+		return nil, err
+	}
+
+	testResult.Ipns = ipnsHash
+	testResult.IpnsKeyCreated = true
+
 	jsonResponse, err := json.Marshal(testResult)
 	if err != nil {
 		return nil, errors.New("Error parsing to json: " + err.Error())

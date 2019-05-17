@@ -30,6 +30,7 @@ func publishIPNS(node *core.IpfsNode, ipfsCid cid.Cid, keyName string) error {
 	ipnsPublishOpts := []options.NamePublishOption{
 		options.Name.Key(keyName),
 		options.Name.AllowOffline(true),
+		options.Name.ValidTime(time.Hour * 48),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), ipnsTimeout)
