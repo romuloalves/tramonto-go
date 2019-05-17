@@ -20,7 +20,11 @@ type OneHTTP struct {
 
 // InitializeHTTPServer initializes the new HTTP server
 func InitializeHTTPServer() (*OneHTTP, error) {
+	// Sets server in RELEASE mode
+	gin.SetMode(gin.ReleaseMode)
+
 	r := gin.Default()
+
 	http := &OneHTTP{
 		server: r,
 		mux:    new(sync.Mutex),
